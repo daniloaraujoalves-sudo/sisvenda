@@ -1,97 +1,143 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Mercado</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Mercado Pro 2026</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+<body>
 
-<body class="bg-light">
-<div class="container mt-4">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">🛒 Mercado 2026</a>
+        <div class="navbar-nav ms-auto">
+            {% if session.nome %}
+                <a class="nav-link" href="/?aba=loja">Loja</a>
+                <a class="nav-link" href="/?aba=historico">Histórico</a>
+                {% if session.cargo == 'admin' %}
+                    <a class="nav-link text-warning" href="/?aba=gerenciar">Gerenciar</a>
+                {% endif %}
+                <a class="nav-link btn btn-outline-danger btn-sm ms-2" href="/logout">Sair</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
 
-<h2>🛒 Mercado</h2>
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat,msg in messages %}<div class="alert alert-{{cat}}">{{msg}}</div>{% endfor %}
+    {% endwith %}
 
-<!-- mensagens -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% for cat,msg in messages %}
-<div class="alert alert-{{cat}}">{{msg}}</div>
-{% endfor %}
-{% endwith %}
+    {% if not session.nome %}
+    <div class="row justify-content-center">
+        <div class="col-md-4 card p-4 m-2 shadow-sm">
+            <h4>Login</h4>
+            <form action="/login" method="POST">
+                <input name="u" placeholder="Email ou admin" class="form-control mb-2" required>
+                <input name="s" type="password" placeholder="Senha" class="form-control mb-2" required>
+                <button class="btn btn-primary w-100">Entrar</button>
+            </form>
+        </div>
+        <div class="col-md-4 card p-4 m-2 shadow-sm">
+            <h4>Cadastrar Cliente</h4>
+            <form action="/register" method="POST">
+                <input name="nome" placeholder="Nome Completo" class="form-control mb-2" required>
+                <input name="email" placeholder="E-mail" class="form-control mb-2" required>
+                <input name="senha" type="password" placeholder="Senha" class="form-control mb-2" required>
+                <button class="btn btn-success w-100">Criar Conta</button>
+            </form>
+        </div>
+    </div>
 
-<!-- busca -->
-<form method="GET" class="mb-3">
-<input name="q" class="form-control" placeholder="Buscar produto...">
-</form>
+    {% else %}
+    
+    <h3 class="mb-4 text-secondary">Olá, {{session.nome}}! <span class="badge bg-info">{{session.cargo}}</span></h3>
 
-<!-- login/cadastro -->
-{% if not session.nome %}
-<form action="/login" method="POST">
-<input name="u" placeholder="email/admin" class="form-control mb-1">
-<input name="s" type="password" placeholder="senha" class="form-control mb-1">
-<button class="btn btn-dark w-100">Entrar</button>
-</form>
+    {% if aba == 'loja' %}
+        <form method="GET" class="mb-4 d-flex gap-2">
+            <input name="q" class="form-control" placeholder="O que você procura hoje?">
+            <button class="btn btn-dark">Buscar</button>
+        </form>
 
-<hr>
+        <div class="row">
+            {% for p in produtos %}
+            <div class="col-md-3 mb-4">
+                <div class="card card-produto h-100 shadow-sm">
+                    <img src="{{p.imagem or 'https://via.placeholder.com/150'}}" class="card-img-top">
+                    <div class="card-body">
+                        <h5>{{p.nome}}</h5>
+                        <p class="text-success fw-bold">R$ {{p.preco}}</p>
+                        <small>Estoque: {{p.estoque}}</small>
+                        {% if session.cargo == 'cliente' %}
+                        <form action="/add_carrinho/{{p.id}}" method="POST" class="mt-2">
+                            <button class="btn btn-buy w-100">Adicionar ao Carrinho</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if session.cargo == 'cliente' and carrinho_qtd > 0 %}
+        <div class="fixed-bottom p-3 bg-white border-top shadow text-center">
+            <span class="me-3">🛒 Você tem <strong>{{carrinho_qtd}}</strong> itens no carrinho</span>
+            <a href="/finalizar" class="btn btn-success px-5">Finalizar Compra Agora</a>
+        </div>
+        {% endif %}
 
-<form action="/register" method="POST">
-<input name="nome" placeholder="nome" class="form-control mb-1">
-<input name="email" placeholder="email" class="form-control mb-1">
-<input name="senha" type="password" placeholder="senha" class="form-control mb-1">
-<button class="btn btn-success w-100">Cadastrar</button>
-</form>
+    {% elif aba == 'historico' %}
+        <h4>Minhas Atividades / Vendas</h4>
+        <table class="table table-striped mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    {% if session.cargo == 'admin' %}<th>Cliente</th>{% endif %}
+                    <th>Qtd</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in historico %}
+                <tr>
+                    <td>#{{v.id}}</td>
+                    <td>{{v.nome}}</td>
+                    {% if session.cargo == 'admin' %}<td>{{v.cliente}}</td>{% endif %}
+                    <td>{{v.quantidade}}</td>
+                    <td>R$ {{v.total}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-{% else %}
-<p>👤 {{session.nome}} ({{session.cargo}}) | <a href="/logout">Sair</a></p>
-{% endif %}
+    {% elif aba == 'gerenciar' and session.cargo == 'admin' %}
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card p-3 bg-warning text-dark mb-4">
+                    <h3>Faturamento Total</h3>
+                    <p class="display-6">R$ {{faturamento}}</p>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card p-3 shadow-sm">
+                    <h4>Cadastrar Novo Produto</h4>
+                    <form action="/admin/add" method="POST">
+                        <div class="row">
+                            <div class="col"><input name="nome" placeholder="Produto" class="form-control mb-2" required></div>
+                            <div class="col"><input name="preco" placeholder="Preço" class="form-control mb-2" required></div>
+                        </div>
+                        <input name="estoque" placeholder="Estoque inicial" class="form-control mb-2" required>
+                        <input name="imagem" placeholder="Link da Imagem" class="form-control mb-2">
+                        <button class="btn btn-primary w-100">Salvar Produto</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
-<!-- carrinho -->
-{% if session.cargo == 'cliente' %}
-<div class="alert alert-info">
-🛒 Itens no carrinho: {{carrinho_qtd}}
-</div>
-{% endif %}
-
-<!-- admin -->
-{% if session.cargo == 'admin' %}
-<h4>💰 Faturamento: R$ {{faturamento}}</h4>
-
-<form action="/admin/add" method="POST">
-<input name="nome" placeholder="produto" class="form-control mb-1">
-<input name="preco" placeholder="preço" class="form-control mb-1">
-<input name="estoque" placeholder="estoque" class="form-control mb-1">
-<input name="imagem" placeholder="url imagem" class="form-control mb-1">
-<button class="btn btn-primary w-100">Adicionar</button>
-</form>
-{% endif %}
-
-<hr>
-
-<div class="row">
-{% for p in produtos %}
-<div class="col-md-3">
-<div class="card p-2 mb-3">
-
-<img src="{{p.imagem or 'https://via.placeholder.com/150'}}">
-
-<h5>{{p.nome}}</h5>
-<p>R$ {{p.preco}}</p>
-<p>Estoque: {{p.estoque}}</p>
-
-{% if session.cargo == 'cliente' %}
-<form action="/add_carrinho/{{p.id}}" method="POST">
-<button class="btn btn-success w-100">Adicionar</button>
-</form>
-{% endif %}
-
-</div>
-</div>
-{% endfor %}
-</div>
-
-{% if session.cargo == 'cliente' %}
-<a href="/finalizar" class="btn btn-dark w-100">Finalizar Compra</a>
-{% endif %}
-
+    {% endif %}
 </div>
 </body>
 </html>

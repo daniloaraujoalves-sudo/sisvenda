@@ -1,8 +1,52 @@
-:root { --primary: #2c3e50; --accent: #27ae60; }
-body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-.card-produto { border: none; border-radius: 15px; transition: 0.3s ease; }
-.card-produto:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
-.btn-buy { background: var(--primary); color: white; border-radius: 10px; font-weight: 600; transition: 0.2s; }
-.btn-buy:hover { background: var(--accent); color: white; }
-.price-tag { margin: 1rem 0; }
-.navbar { border-bottom: 4px solid var(--accent); }
+:root { 
+    --primary: #2c3e50; 
+    --accent: #27ae60; 
+    --bg: #f8f9fa;
+}
+
+body { 
+    background-color: var(--bg); 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-bottom: 80px; /* espaço para o carrinho fixo */
+}
+
+.navbar {
+    border-bottom: 3px solid var(--accent);
+}
+
+.card-produto {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.card-produto:hover {
+    transform: scale(1.03);
+}
+
+.card-img-top {
+    border-radius: 12px 12px 0 0;
+    height: 180px;
+    object-fit: cover;
+}
+
+.btn-buy {
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.btn-buy:hover {
+    background: var(--accent);
+    color: white;
+}
+
+.nav-link {
+    font-weight: 500;
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
